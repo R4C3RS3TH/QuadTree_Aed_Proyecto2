@@ -32,7 +32,7 @@ El proyecto se puede compilar y ejecutar directamente desde la terminal, sin nec
 ### Windows (usando CMD o PowerShell)
 Las dependencias de SFML ya están incluidas y configuradas en los scripts. Para compilar y generar el ejecutable, simplemente ejecute el script `.bat` proporcionado:
 ```cmd
-build.bat
+./build.bat
 ```
 Alternativamente, si tiene `make` de MinGW configurado en su sistema, puede compilar usando:
 ```cmd
@@ -40,7 +40,7 @@ make
 ```
 Una vez compilado, ejecute el programa con:
 ```cmd
-quadtree_sim.exe
+./quadtree_sim.exe
 ```
 
 ### Linux
