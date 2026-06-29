@@ -329,21 +329,6 @@ void App::drawWorld() {
     sf::RectangleShape bg({worldW(), WIN_H});
     bg.setFillColor(Theme::BG);
     window_.draw(bg);
-
-    // Grid sutil
-    int step = 80;
-    sf::RectangleShape line;
-    line.setFillColor(Theme::GRID);
-    for (int x = 0; x < (int)worldW(); x += step) {
-        line.setSize({1.f, WIN_H});
-        line.setPosition((float)x, 0);
-        window_.draw(line);
-    }
-    for (int y = 0; y < (int)WIN_H; y += step) {
-        line.setSize({worldW(), 1.f});
-        line.setPosition(0, (float)y);
-        window_.draw(line);
-    }
 }
 
 // ─── Nodos del QuadTree ───
