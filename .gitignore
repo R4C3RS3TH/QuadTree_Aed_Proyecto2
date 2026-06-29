@@ -6,3 +6,6 @@ quadtree_sim
 # Ignorar carpetas de IDEs
 .idea/
 .vscode/
+
+# Ignorar archivos de datos generados o logs
+benchmark_results.csv
