@@ -1,0 +1,13 @@
+# Ignorar ejecutables y objetos (generados localmente al compilar)
+*.o
+*.exe
+quadtree_sim
+
+# Ignorar carpetas de IDEs
+.idea/
+.vscode/
+
+# NO ignorar las librerías SFML ni los archivos .dll si se desea que el repositorio 
+# sea autocontenido y los colaboradores/usuarios no tengan que instalarlas por separado.
+# !*.dll
+# !SFML/
