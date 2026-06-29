@@ -18,15 +18,10 @@ sudo apt update
 sudo apt install cmake g++ libsfml-dev
 ```
 
-### macOS
-```bash
-brew install cmake sfml
-```
 
 ### Windows
-- Instalar [CMake](https://cmake.org/download/)
-- Instalar [SFML 2.5+](https://www.sfml-dev.org/download.php)
-- Instalar MinGW o MSVC
+- Instalar MinGW (para usar `g++` y `make`)
+- *Nota: Las librerías y dependencias de SFML ya vienen incluidas en la carpeta `SFML/` del repositorio, por lo que no es necesario instalarlas ni configurarlas manualmente.*
 
 ---
 
@@ -35,22 +30,24 @@ brew install cmake sfml
 El proyecto se puede compilar y ejecutar directamente desde la terminal, sin necesidad de usar CMake.
 
 ### Windows (usando CMD o PowerShell)
-Antes de ejecutar el script, asegúrese de editar el archivo `build.bat` (y `Makefile` si corresponde) para que las variables `SFML_INCLUDE` y `SFML_LIB` apunten a la carpeta donde tiene instalado SFML.
-Luego, simplemente ejecute el script `.bat` proporcionado, el cual compilará el código y generará el ejecutable:
+Las dependencias de SFML ya están incluidas y configuradas en los scripts. Para compilar y generar el ejecutable, simplemente ejecute el script `.bat` proporcionado:
 ```cmd
 build.bat
 ```
-O compile manualmente usando `g++`:
+Alternativamente, si tiene `make` de MinGW configurado en su sistema, puede compilar usando:
 ```cmd
-g++ -std=c++17 -O2 -Wall -Wextra -Iinclude -o quadtree_sim.exe src/main.cpp src/QuadTree.cpp src/Simulation.cpp src/App.cpp -lsfml-graphics -lsfml-window -lsfml-system
+make
+```
+Una vez compilado, ejecute el programa con:
+```cmd
 quadtree_sim.exe
 ```
 
-### Linux / macOS (o Windows con MinGW32-make)
-Puede utilizar el `Makefile` incluido:
+### Linux
+En entornos Unix, SFML se usa desde el sistema. Puede utilizar el archivo de configuración para Linux incluido:
 ```bash
-# Compilar
-make
+# Compilar usando el Makefile específico de Linux
+make -f Makefile.linux
 
 # Ejecutar
 ./quadtree_sim
@@ -127,8 +124,6 @@ La aplicación genera **datos sintéticos** configurables. No se requiere datase
 - **Make / g++** – compilación directa desde terminal mediante scripts
 
 ---
-
-## Créditos
 
 Proyecto final CS2023 – Algoritmos y Estructuras de Datos  
 Departamento de Computer Science  
