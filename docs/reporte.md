@@ -45,6 +45,7 @@ Node {
 | `insert(p)` | Insertar objeto en el árbol | O(log n) promedio |
 | `query(AABB)` | Buscar objetos en región rectangular | O(log n + k) |
 | `queryCircle(c, r)` | Buscar objetos en radio r | O(log n + k) |
+| `queryKNN(p, k)` | Buscar los k vecinos más cercanos a un punto | O(log n + k) |
 | `clear()` | Vaciar el árbol | O(n) |
 | `rebuild(particles)` | Reconstruir el árbol completo | O(n log n) |
 
@@ -109,6 +110,21 @@ queryCircle(center, radius, found, nodesVisited):
   si divided → propagar a hijos
 ```
 
+### 2.8 Consulta K-Nearest Neighbors (KNN)
+
+Permite buscar los $k$ elementos más cercanos a un punto objetivo:
+
+```
+queryKNN(target, k, best, nodesVisited):
+  si |best| == k y dist(target, boundary) > peor_dist(best):
+      return // poda
+  insertar ordenadamente en best cada p en particles (manteniendo máx k elementos)
+  si divided:
+      ordenar hijos por distancia a target (más cercano primero)
+      para cada hijo:
+          hijo.queryKNN(target, k, best, nodesVisited)
+```
+
 ---
 
 ## 3. Aplicación: Simulador de Partículas 2D
@@ -143,11 +159,14 @@ para cada partícula p:
     area = AABB(p.x, p.y, p.radius*2 + margen, p.radius*2 + margen)
     candidatos = quadTree.query(area)
     para cada q en candidatos (q.id > p.id):
-        si dist(p, q) < p.radius + q.radius:
-            colisión detectada
+        dist = dist(p, q)
+        si dist < p.radius + q.radius:
+            // 1. Separar para evitar solapamiento
+            // 2. Modificar velocidades (choque elástico)
+            resolverColisionFisica(p, q, dist)
 ```
 
-Esto reduce el número de comparaciones de `O(n²)` a `O(n log n)` en media.
+Esto reduce el número de comparaciones de `O(n²)` a `O(n log n)` en media, y la física de choques elásticos previene que las partículas se superpongan continuamente, permitiendo conteos de colisiones realistas.
 
 ### 3.4 Distribuciones de partículas
 
@@ -158,6 +177,8 @@ Se implementaron tres distribuciones configurables:
 | **Uniforme** | Posiciones aleatorias con distribución uniforme en todo el espacio |
 | **Clusters** | 5 centros aleatorios; partículas distribuidas con normal σ=6% del ancho |
 | **Zona densa** | 70% en región central (σ=8%), 30% uniforme en todo el espacio |
+
+*Nota: La aleatoriedad (posiciones, velocidades y tamaños) utiliza un motor `std::mt19937` con una semilla determinista configurable (`seed`), garantizando que la simulación sea reproducible en cada reinicio.*
 
 ---
 
@@ -219,9 +240,10 @@ La aplicación muestra en tiempo real:
 |----------|-------------|
 | Partículas | Círculos coloreados por velocidad; rojo si hay colisión |
 | Subdivisiones QT | Cuadrículas azules que muestran la partición actual |
-| Región consultada | Rectángulo/círculo amarillo al realizar consultas |
+| Región consultada | Rectángulo/círculo amarillo al realizar consultas, o punto con radio en KNN |
 | Resultados | Partículas encontradas destacadas con borde amarillo |
 | Panel lateral | Stats en tiempo real: comparaciones QT vs BF, colisiones, frame time |
+| Insertar Partícula| Añadir un objeto nuevo en cualquier posición de la simulación mediante *Right Click* |
 | Gráfico temporal | Histórico de frame time QT vs estimado BF |
 | Resultados benchmark | Tabla comparativa completa al presionar `B` |
 

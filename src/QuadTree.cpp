@@ -4,6 +4,12 @@
 //  QuadTree::Node
 // ══════════════════════════════════════════════
 
+static double distToAABB(const Vec2& p, const AABB& b) {
+    double dx = std::max({0.0, b.minX() - p.x, p.x - b.maxX()});
+    double dy = std::max({0.0, b.minY() - p.y, p.y - b.maxY()});
+    return std::sqrt(dx*dx + dy*dy);
+}
+
 bool QuadTree::Node::insert(Particle* p) {
     if (!boundary.contains(p->pos())) return false;
 
@@ -74,6 +80,38 @@ void QuadTree::Node::queryCircle(const Vec2& center, double radius,
             child->queryCircle(center, radius, found, nodesVisited);
 }
 
+void QuadTree::Node::queryKNN(const Vec2& target, int k, std::vector<Particle*>& best, int& nodesVisited) const {
+    nodesVisited++;
+
+    if ((int)best.size() == k) {
+        double worstDist = best.back()->pos().distTo(target);
+        if (distToAABB(target, boundary) > worstDist) return;
+    }
+
+    for (auto* p : particles) {
+        auto it = std::lower_bound(best.begin(), best.end(), p,
+            [&target](Particle* a, Particle* b) {
+                return a->pos().distTo(target) < b->pos().distTo(target);
+            });
+        
+        if (it != best.end() && *it == p) continue;
+        
+        best.insert(it, p);
+        if ((int)best.size() > k) best.pop_back();
+    }
+
+    if (divided) {
+        std::pair<double, Node*> order[4];
+        for(int i = 0; i < 4; i++) {
+            order[i] = { distToAABB(target, children[i]->boundary), children[i].get() };
+        }
+        std::sort(order, order + 4, [](auto& a, auto& b){ return a.first < b.first; });
+        for(int i = 0; i < 4; i++) {
+            order[i].second->queryKNN(target, k, best, nodesVisited);
+        }
+    }
+}
+
 void QuadTree::Node::clear() {
     particles.clear();
     if (divided) {
@@ -128,6 +166,13 @@ std::vector<Particle*> QuadTree::queryCircle(const Vec2& center, double radius, 
     nodesVisited = 0;
     root_->queryCircle(center, radius, found, nodesVisited);
     return found;
+}
+
+std::vector<Particle*> QuadTree::queryKNN(const Vec2& target, int k, int& nodesVisited) const {
+    std::vector<Particle*> best;
+    nodesVisited = 0;
+    root_->queryKNN(target, k, best, nodesVisited);
+    return best;
 }
 
 int QuadTree::detectCollisions(std::vector<Particle>& particles) {
@@ -185,6 +230,24 @@ std::vector<Particle*> BruteForce::queryCircle(
         if (p.pos().distTo(center) <= radius)
             found.push_back(&p);
     }
+    return found;
+}
+
+std::vector<Particle*> BruteForce::queryKNN(
+    std::vector<Particle>& particles,
+    const Vec2& target, int k,
+    int& comparisons) {
+    
+    std::vector<Particle*> found;
+    comparisons = 0;
+    for (auto& p : particles) {
+        comparisons++;
+        found.push_back(&p);
+    }
+    std::sort(found.begin(), found.end(), [&target](Particle* a, Particle* b) {
+        return a->pos().distTo(target) < b->pos().distTo(target);
+    });
+    if ((int)found.size() > k) found.resize(k);
     return found;
 }
 

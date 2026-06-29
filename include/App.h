@@ -16,6 +16,7 @@ enum class AppMode {
     SIMULATE,       // simulación en tiempo real
     QUERY_RECT,     // el usuario dibuja un rectángulo
     QUERY_CIRCLE,   // el usuario define un círculo
+    QUERY_KNN,      // el usuario define un punto y busca k vecinos
     BENCHMARK,      // corriendo experimentos automáticos
     PAUSED
 };
@@ -45,6 +46,7 @@ private:
     sf::Vector2f dragStart_, dragEnd_;
     sf::Vector2f mousePos_;
     double queryRadius_ = 60.0;
+    int    queryK_      = 5;
 
     // Resultados de consulta
     QueryResult lastQuery_;
@@ -86,7 +88,7 @@ private:
     // Offset de la UI lateral
     static constexpr float UI_W = 320.f;
     static constexpr float WIN_W = 1280.f;
-    static constexpr float WIN_H = 720.f;
+    static constexpr float WIN_H = 800.f;
     float worldOffX() const { return 0.f; }
     float worldW()    const { return WIN_W - UI_W; }
     float worldH()    const { return WIN_H; }

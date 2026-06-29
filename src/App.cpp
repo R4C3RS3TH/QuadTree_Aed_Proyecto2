@@ -138,6 +138,10 @@ void App::processEvents() {
                     mode_ = AppMode::QUERY_CIRCLE;
                     hasQuery_ = false;
                     break;
+                case sf::Keyboard::K:
+                    mode_ = AppMode::QUERY_KNN;
+                    hasQuery_ = false;
+                    break;
                 case sf::Keyboard::S:
                     mode_ = AppMode::SIMULATE;
                     hasQuery_ = false;
@@ -169,12 +173,17 @@ void App::processEvents() {
         }
 
         // Mouse
-        if (ev.type == sf::Event::MouseButtonPressed && ev.mouseButton.button == sf::Mouse::Left) {
+        if (ev.type == sf::Event::MouseButtonPressed) {
             float mx = (float)ev.mouseButton.x, my = (float)ev.mouseButton.y;
             if (mx < worldW()) { // dentro del mundo
-                dragging_  = true;
-                dragStart_ = {mx, my};
-                dragEnd_   = {mx, my};
+                if (ev.mouseButton.button == sf::Mouse::Left) {
+                    dragging_  = true;
+                    dragStart_ = {mx, my};
+                    dragEnd_   = {mx, my};
+                } else if (ev.mouseButton.button == sf::Mouse::Right) {
+                    Vec2 wpos = screenToWorld(mx, my);
+                    sim_.addParticle(wpos.x, wpos.y);
+                }
             }
         }
 
@@ -212,12 +221,20 @@ void App::processEvents() {
                         lastQuery_ = sim_.queryCircle(center, worldR);
                         hasQuery_  = true;
                     }
+                } else if (mode_ == AppMode::QUERY_KNN) {
+                    Vec2 center = screenToWorld(dragStart_.x, dragStart_.y);
+                    lastQuery_ = sim_.queryKNN(center, queryK_);
+                    hasQuery_  = true;
                 }
             }
         }
 
         if (ev.type == sf::Event::MouseWheelScrolled) {
-            queryRadius_ = std::clamp(queryRadius_ + ev.mouseWheelScroll.delta * 5.0, 10.0, 300.0);
+            if (mode_ == AppMode::QUERY_KNN) {
+                queryK_ = std::max(1, queryK_ + (int)ev.mouseWheelScroll.delta);
+            } else {
+                queryRadius_ = std::clamp(queryRadius_ + ev.mouseWheelScroll.delta * 5.0, 10.0, 300.0);
+            }
         }
     }
 }
@@ -280,6 +297,12 @@ void App::render() {
             c.setFillColor({255,220,30,40});
             c.setOutlineColor({255,220,80,180});
             c.setOutlineThickness(1.5f);
+            window_.draw(c);
+        } else if (mode_ == AppMode::QUERY_KNN) {
+            sf::CircleShape c(4.f);
+            c.setOrigin(4.f, 4.f);
+            c.setPosition(dragStart_);
+            c.setFillColor({255,100,100,200});
             window_.draw(c);
         }
     }
@@ -454,6 +477,7 @@ void App::drawHUD() {
         case AppMode::PAUSED:       modeStr = "PAUSADO"; break;
         case AppMode::QUERY_RECT:   modeStr = "Consulta Rect (drag)"; break;
         case AppMode::QUERY_CIRCLE: modeStr = "Consulta Circulo (drag)"; break;
+        case AppMode::QUERY_KNN:    modeStr = "Consulta KNN (drag/click)"; break;
         case AppMode::BENCHMARK:    modeStr = "Benchmark..."; break;
     }
     line(modeStr, Theme::QUERIED);
@@ -476,6 +500,9 @@ void App::drawHUD() {
     line("[S] Simular  [SPACE] Pausa");
     line("[Q] Consulta rect");
     line("[C] Consulta circulo");
+    line("[K] Consulta KNN (rueda=k)");
+    if (mode_ == AppMode::QUERY_KNN) line("    -> K actual: " + std::to_string(queryK_), Theme::QUERIED);
+    line("[Right Click] Insertar particula");
     line("[B] Benchmark completo");
     line("[R] Reiniciar");
     line("[UP/DOWN] +/- particulas");

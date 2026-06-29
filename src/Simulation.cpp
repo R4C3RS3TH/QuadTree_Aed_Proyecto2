@@ -15,13 +15,13 @@ static double nowUs() {
 // ══════════════════════════════════════════════
 
 Simulation::Simulation(const SimConfig& cfg)
-    : cfg_(cfg), rng_(48) {
+    : cfg_(cfg), rng_(cfg.seed) {
     reset(cfg);
 }
 
 void Simulation::reset(const SimConfig& cfg) {
     cfg_ = cfg;
-    rng_.seed(48);
+    rng_.seed(cfg_.seed);
     generateParticles();
     AABB world(cfg_.worldW / 2, cfg_.worldH / 2, cfg_.worldW / 2, cfg_.worldH / 2);
     qt_ = std::make_unique<QuadTree>(world, cfg_.qtCapacity);
@@ -134,7 +134,7 @@ void Simulation::update(double dt) {
     // Reconstruir QuadTree
     rebuildQT();
 
-    // Detectar colisiones con QuadTree
+    // Detectar colisiones con QuadTree y resolver física
     int qtComp = 0;
     for (auto& p : particles_) {
         int visited = 0;
@@ -143,10 +143,50 @@ void Simulation::update(double dt) {
         qtComp += visited;
         for (auto* q : cands) {
             if (q->id <= p.id) continue;
-            if (p.pos().distTo(q->pos()) < p.radius + q->radius) {
+            
+            double dx = q->x - p.x;
+            double dy = q->y - p.y;
+            double dist = std::sqrt(dx*dx + dy*dy);
+            
+            if (dist < p.radius + q->radius && dist > 0.0) {
                 p.colliding = true;
                 q->colliding = true;
                 lastStats_.collisions++;
+                
+                // Normal del choque
+                double nx = dx / dist;
+                double ny = dy / dist;
+                
+                // Separar para evitar que se queden pegados
+                double overlap = p.radius + q->radius - dist;
+                p.x -= nx * overlap * 0.5;
+                p.y -= ny * overlap * 0.5;
+                q->x += nx * overlap * 0.5;
+                q->y += ny * overlap * 0.5;
+                
+                // Velocidad relativa
+                double dvx = q->vx - p.vx;
+                double dvy = q->vy - p.vy;
+                double velAlongNormal = dvx * nx + dvy * ny;
+                
+                // Resolver si se están acercando
+                if (velAlongNormal < 0) {
+                    // Masas proporcionales al área (radio al cuadrado)
+                    double m1 = p.radius * p.radius;
+                    double m2 = q->radius * q->radius;
+                    
+                    // Choque elástico (e = 1)
+                    double j = -(1.0 + 1.0) * velAlongNormal;
+                    j /= (1.0/m1 + 1.0/m2);
+                    
+                    double impulseX = j * nx;
+                    double impulseY = j * ny;
+                    
+                    p.vx -= (1.0/m1) * impulseX;
+                    p.vy -= (1.0/m1) * impulseY;
+                    q->vx += (1.0/m2) * impulseX;
+                    q->vy += (1.0/m2) * impulseY;
+                }
             }
         }
     }
@@ -206,6 +246,44 @@ QueryResult Simulation::queryCircle(const Vec2& center, double radius) {
     r.bfTimeUs = nowUs() - t0;
 
     return r;
+}
+
+QueryResult Simulation::queryKNN(const Vec2& center, int k) {
+    QueryResult r;
+    r.isRect       = false;
+    r.isKNN        = true;
+    r.circleCenter = center;
+    r.circleRadius = 0; // Not applicable for KNN, but can be updated later
+
+    double t0 = nowUs();
+    r.qtFound = qt_->queryKNN(center, k, r.qtNodesVisited);
+    r.qtTimeUs = nowUs() - t0;
+
+    t0 = nowUs();
+    r.bfFound = BruteForce::queryKNN(particles_, center, k, r.bfComparisons);
+    r.bfTimeUs = nowUs() - t0;
+
+    if (!r.qtFound.empty()) {
+        r.circleRadius = r.qtFound.back()->pos().distTo(center);
+    }
+
+    return r;
+}
+
+void Simulation::addParticle(double x, double y) {
+    int id = particles_.empty() ? 0 : particles_.back().id + 1;
+    
+    std::uniform_real_distribution<double> rr(cfg_.minRadius, cfg_.maxRadius);
+    particles_.emplace_back(id, x, y, 0, 0, rr(rng_));
+    
+    double spd = cfg_.minSpeed + (rng_() % 1000) / 1000.0 * (cfg_.maxSpeed - cfg_.minSpeed);
+    double ang = (rng_() % 1000) / 1000.0 * 2.0 * 3.14159265;
+    particles_.back().vx = spd * std::cos(ang);
+    particles_.back().vy = spd * std::sin(ang);
+    
+    // Add to QuadTree immediately or let rebuildQT handle it
+    qt_->insert(&particles_.back());
+    cfg_.numParticles++;
 }
 
 std::vector<const QuadTree::Node*> Simulation::getNodes() const {

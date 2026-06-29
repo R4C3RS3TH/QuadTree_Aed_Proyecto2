@@ -21,6 +21,7 @@ struct SimConfig {
     // 0 = uniforme, 1 = clusters, 2 = zona densa
     int    distribution  = 0;
     bool   bruteForce    = false;  // si true, usar fuerza bruta para colisiones
+    unsigned int seed    = 42;     // semilla para aleatoriedad reproducible
 };
 
 // ─────────────────────────────────────────────
@@ -51,6 +52,7 @@ struct QueryResult {
     Vec2   circleCenter;
     double circleRadius = 0.0;
     bool   isRect       = true;
+    bool   isKNN        = false;
 };
 
 // ─────────────────────────────────────────────
@@ -82,6 +84,10 @@ public:
     // Consultas manuales
     QueryResult queryRect(const AABB& range);
     QueryResult queryCircle(const Vec2& center, double radius);
+    QueryResult queryKNN(const Vec2& center, int k);
+
+    // Modificar simulación
+    void addParticle(double x, double y);
 
     // Benchmark automático
     BenchmarkEntry runBenchmark(int n, int dist, int frames = 60);

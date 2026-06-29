@@ -9,6 +9,8 @@ int main() {
     std::cout << "  S        : Modo simulacion\n";
     std::cout << "  Q        : Modo consulta rectangular (drag)\n";
     std::cout << "  C        : Modo consulta circular (drag)\n";
+    std::cout << "  K        : Modo consulta KNN (click/drag, rueda=K)\n";
+    std::cout << "  Right Click : Insertar particula\n";
     std::cout << "  B        : Ejecutar benchmark completo\n";
     std::cout << "  1/2/3    : Cambiar distribucion (uniforme/clusters/densa)\n";
     std::cout << "  UP/DOWN  : +/- particulas\n";

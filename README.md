@@ -73,6 +73,9 @@ g++ -std=c++17 -O2 -Iinclude \
 | `S` | Modo simulación en tiempo real |
 | `Q` | Modo consulta rectangular (arrastrar para definir región) |
 | `C` | Modo consulta circular (arrastrar desde centro) |
+| `K` | Modo consulta KNN (click/arrastrar para punto, rueda para cambiar K) |
+| `Right Click`| Insertar partícula nueva en la posición del mouse |
+| `Rueda`| Cambiar radio de consulta circular o cantidad de vecinos (K) en KNN |
 | `B` | Ejecutar benchmark completo (3 tamaños × 3 distribuciones) |
 | `1` | Distribución uniforme |
 | `2` | Distribución con clusters |
@@ -81,6 +84,19 @@ g++ -std=c++17 -O2 -Iinclude \
 | `← / →` | Cambiar capacidad máxima del QuadTree |
 | `R` | Reiniciar simulación |
 | `ESC` | Salir |
+
+---
+
+## Métricas de la Visualización
+
+El HUD muestra métricas en tiempo real sobre el estado y rendimiento de la simulación:
+
+- **Partículas**: Cantidad total de partículas actualmente en simulación.
+- **Colisiones**: Número total de choques detectados entre partículas durante el frame actual.
+- **Frame QT**: Tiempo en milisegundos que toma calcular las colisiones utilizando el QuadTree.
+- **Comp. QT**: Número de comparaciones realizadas por el QuadTree para detectar colisiones en el frame actual.
+- **Comp. BF**: Número de comparaciones estimadas o reales que tomaría resolver las colisiones mediante Fuerza Bruta (O(N²)).
+- **QT/BF ratio**: Relación de mejora de rendimiento; indica cuántas veces menos comparaciones requiere el QuadTree frente a Fuerza Bruta.
 
 ---
 

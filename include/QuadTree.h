@@ -87,6 +87,8 @@ public:
         void query(const AABB& range, std::vector<Particle*>& found, int& nodesVisited) const;
         void queryCircle(const Vec2& center, double radius,
                          std::vector<Particle*>& found, int& nodesVisited) const;
+        void queryKNN(const Vec2& target, int k,
+                      std::vector<Particle*>& best, int& nodesVisited) const;
         void clear();
         void collectNodes(std::vector<const Node*>& out) const;
     };
@@ -103,6 +105,9 @@ public:
 
     // Consulta circular (vecinos en radio r)
     std::vector<Particle*> queryCircle(const Vec2& center, double radius, int& nodesVisited) const;
+
+    // Consulta KNN (K vecinos más cercanos)
+    std::vector<Particle*> queryKNN(const Vec2& target, int k, int& nodesVisited) const;
 
     // Detección de colisiones (todos contra todos con QuadTree)
     int detectCollisions(std::vector<Particle>& particles);
@@ -131,6 +136,11 @@ struct BruteForce {
     static std::vector<Particle*> queryCircle(
         std::vector<Particle>& particles,
         const Vec2& center, double radius,
+        int& comparisons);
+
+    static std::vector<Particle*> queryKNN(
+        std::vector<Particle>& particles,
+        const Vec2& target, int k,
         int& comparisons);
 
     static int detectCollisions(std::vector<Particle>& particles, int& comparisons);
