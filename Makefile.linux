@@ -1,0 +1,26 @@
+CXX = g++
+
+# Pop!_OS (Linux) uses the system-installed SFML libraries
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Iinclude
+LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system
+
+SRCS = src/main.cpp src/QuadTree.cpp src/Simulation.cpp src/App.cpp
+OBJS = $(SRCS:.cpp=.o)
+TARGET = quadtree_sim
+
+.PHONY: all clean benchmark
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f src/*.o
+	rm -f $(TARGET) benchmark_only
+
+benchmark: src/QuadTree.cpp src/Simulation.cpp scripts/benchmark_only.cpp
+	$(CXX) $(CXXFLAGS) -o benchmark_only $^
