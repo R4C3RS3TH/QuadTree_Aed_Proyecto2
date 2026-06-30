@@ -119,7 +119,6 @@ void App::processEvents() {
                     sim_.reset(cfg_);
                     hasQuery_ = false;
                     mode_     = AppMode::SIMULATE;
-                    qtFrameTimes_.clear(); bfFrameTimes_.clear();
                     break;
                 case sf::Keyboard::Num1:
                     cfg_.distribution = 0; sim_.reset(cfg_); hasQuery_ = false;
@@ -249,16 +248,9 @@ void App::update() {
 
     if (mode_ == AppMode::SIMULATE) {
         sim_.update((double)dt);
-        auto& s = sim_.lastStats();
-        if ((int)qtFrameTimes_.size() >= GRAPH_HISTORY) qtFrameTimes_.pop_front();
-        if ((int)bfFrameTimes_.size() >= GRAPH_HISTORY) bfFrameTimes_.pop_front();
-        // Estimado BF en ms
-        int n = s.numParticles;
-        double bfMs = (double)(n*(n-1)/2) * 0.000001; // ~1ns por comparación
-        qtFrameTimes_.push_back((float)s.frameTimeMs);
-        bfFrameTimes_.push_back((float)bfMs);
     }
 }
+
 
 // ══════════════════════════════════════════════
 //  Render
@@ -319,7 +311,6 @@ void App::render() {
 
     drawHUD();
     if (benchDone_) drawBenchmarkPanel();
-    drawGraph();
 
     window_.display();
 }
@@ -560,47 +551,7 @@ void App::drawBenchmarkPanel() {
     line("[Presiona B de nuevo para cerrar / ESC para salir]", Theme::DIM, 11);
 }
 
-// ─── Mini gráfico de rendimiento ───
-void App::drawGraph() {
-    if (qtFrameTimes_.empty()) return;
 
-    float gx = worldW() + 10.f, gy = WIN_H - 90.f;
-    float gw = UI_W - 20.f, gh = 75.f;
-
-    sf::RectangleShape bg({gw, gh});
-    bg.setPosition(gx, gy);
-    bg.setFillColor({15,18,30,200});
-    bg.setOutlineColor(Theme::GRID);
-    bg.setOutlineThickness(1.f);
-    window_.draw(bg);
-
-    auto lbl = makeText("Frame time (ms)", 10, Theme::DIM, gx+2, gy+2);
-    window_.draw(lbl);
-
-    float maxVal = 0;
-    for (auto v : qtFrameTimes_) maxVal = std::max(maxVal, v);
-    for (auto v : bfFrameTimes_) maxVal = std::max(maxVal, v);
-    if (maxVal < 0.001f) maxVal = 1.f;
-
-    auto drawCurve = [&](const std::deque<float>& data, sf::Color col) {
-        if (data.size() < 2) return;
-        sf::VertexArray va(sf::LineStrip, data.size());
-        for (size_t i = 0; i < data.size(); i++) {
-            float xp = gx + (float)i / (GRAPH_HISTORY-1) * gw;
-            float yp = gy + gh - (data[i] / maxVal) * (gh - 10.f);
-            va[i].position = {xp, yp};
-            va[i].color    = col;
-        }
-        window_.draw(va);
-    };
-
-    drawCurve(qtFrameTimes_, Theme::QT_BAR);
-    drawCurve(bfFrameTimes_, Theme::BF_BAR);
-
-    auto leg1 = makeText("QT", 10, Theme::QT_BAR, gx+4, gy+gh-16.f);
-    auto leg2 = makeText("BF(est)", 10, Theme::BF_BAR, gx+30, gy+gh-16.f);
-    window_.draw(leg1); window_.draw(leg2);
-}
 
 // ══════════════════════════════════════════════
 //  Benchmark automático

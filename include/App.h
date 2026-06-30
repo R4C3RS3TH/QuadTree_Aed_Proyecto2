@@ -3,7 +3,6 @@
 #include "Simulation.h"
 #include <string>
 #include <vector>
-#include <deque>
 
 // Panel de UI para stats
 struct UIPanel {
@@ -57,9 +56,7 @@ private:
     bool benchDone_ = false;
     int  benchStep_ = 0;  // 0..total
 
-    // Graph data (historial de frame time)
-    std::deque<float> qtFrameTimes_, bfFrameTimes_;
-    static const int  GRAPH_HISTORY = 120;
+
 
     // ─── métodos ───
     void processEvents();
@@ -72,7 +69,7 @@ private:
     void drawQueryOverlay();
     void drawHUD();
     void drawBenchmarkPanel();
-    void drawGraph();
+
 
 
     void runBenchmarkAll();
