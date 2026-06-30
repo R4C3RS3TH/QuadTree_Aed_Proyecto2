@@ -495,10 +495,23 @@ void App::drawHUD() {
         bf << std::fixed << std::setprecision(1) << lastQuery_.bfTimeUs;
         line("Tiempo QT   : " + qt.str() + " us");
         line("Tiempo BF   : " + bf.str() + " us");
-        line("Nodos visit.: " + std::to_string(lastQuery_.qtNodesVisited));
-        line("Comp. BF    : " + std::to_string(lastQuery_.bfComparisons));
+
+        // candidatos examinados
+        int qtCands = lastQuery_.qtNodesVisited;
+        int bfCands = lastQuery_.bfComparisons;
+        line("Cands. QT   : " + std::to_string(qtCands));
+        line("Cands. BF   : " + std::to_string(bfCands));
+
+        // ratio de poda: cuantas veces menos candidatos examinó QT
+        if (qtCands > 0) {
+            std::ostringstream poda;
+            poda << std::fixed << std::setprecision(1)
+                 << (double)bfCands / qtCands << "x menos trabajo";
+            line("Poda QT     : " + poda.str(), Theme::ACCENT);
+        }
     }
 }
+
 
 // ─── Panel benchmark ───
 void App::drawBenchmarkPanel() {

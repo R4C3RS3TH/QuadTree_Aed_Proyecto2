@@ -67,13 +67,17 @@ void QuadTree::Node::query(const AABB& range, std::vector<Particle*>& found, int
 void QuadTree::Node::queryCircle(const Vec2& center, double radius,
                                   std::vector<Particle*>& found, int& nodesVisited) const {
     nodesVisited++;
-    // AABB del círculo
-    AABB circleBB(center.x, center.y, radius, radius);
-    if (!boundary.intersects(circleBB)) return;
+    // Pruning exacto: distancia mínima del AABB al centro del círculo
+    // Si esa distancia > radio, este nodo no puede contener ningún punto dentro del círculo
+    double dx = std::max({0.0, boundary.minX() - center.x, center.x - boundary.maxX()});
+    double dy = std::max({0.0, boundary.minY() - center.y, center.y - boundary.maxY()});
+    if (dx*dx + dy*dy > radius*radius) return; // sin sqrt: comparamos cuadrados
 
-    for (auto* p : particles)
-        if (p->pos().distTo(center) <= radius)
+    for (auto* p : particles) {
+        double px = p->x - center.x, py = p->y - center.y;
+        if (px*px + py*py <= radius*radius)   // sin sqrt para cada partícula también
             found.push_back(p);
+    }
 
     if (divided)
         for (auto& child : children)
@@ -144,15 +148,6 @@ void QuadTree::clear() {
     root_->clear();
 }
 
-void QuadTree::rebuild(const std::vector<Particle>& particles) {
-    root_->clear();
-    // Necesitamos punteros válidos; se usa vector externo
-    // Esta función es llamada con el vector real de la simulación
-    // para evitar dangling pointers usamos const_cast (los punteros
-    // son a elementos del vector original que persiste en Simulation)
-    for (auto& p : particles)
-        root_->insert(const_cast<Particle*>(&p));
-}
 
 std::vector<Particle*> QuadTree::query(const AABB& range, int& nodesVisited) const {
     std::vector<Particle*> found;
@@ -225,9 +220,11 @@ std::vector<Particle*> BruteForce::queryCircle(
     int& comparisons) {
     std::vector<Particle*> found;
     comparisons = 0;
+    double r2 = radius * radius; // evitar sqrt por partícula
     for (auto& p : particles) {
         comparisons++;
-        if (p.pos().distTo(center) <= radius)
+        double dx = p.x - center.x, dy = p.y - center.y;
+        if (dx*dx + dy*dy <= r2)
             found.push_back(&p);
     }
     return found;

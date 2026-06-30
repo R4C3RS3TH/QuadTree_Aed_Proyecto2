@@ -76,8 +76,6 @@ public:
         // Hijos: NW, NE, SW, SE
         std::unique_ptr<Node> children[4];
 
-        // Stats para comparación
-        mutable int queriesVisited = 0;
 
         Node(AABB b, int cap, int dep)
             : boundary(b), capacity(cap), depth(dep) {}
@@ -98,7 +96,6 @@ public:
 
     void insert(Particle* p);
     void clear();
-    void rebuild(const std::vector<Particle>& particles);
 
     // Consulta rectangular
     std::vector<Particle*> query(const AABB& range, int& nodesVisited) const;
